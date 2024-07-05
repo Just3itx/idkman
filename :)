@@ -137,6 +137,7 @@ function Library:Notify(options, callback)
 				TextColor3 = Library.Theme.TextColor,
 				TextSize = 16,
 				TextXAlignment = Enum.TextXAlignment.Left,
+				RichText = true,
 			}),
 
 			SelfModules.UI.Create("ImageButton", {
