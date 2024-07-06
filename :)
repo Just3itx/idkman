@@ -15,7 +15,7 @@ local Library = {
 		IsBusy = false,
 	},
 	Settings = {
-		ConfigPath = nil,
+		ConfigPath = "3itx Script",
 		MaxNotifLines = 5,
 		MaxNotifStacking = 5,
 	},
