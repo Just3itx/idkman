@@ -454,55 +454,62 @@ function Library:AddWindow(options)
 
 	-- Functions
 
-	local function saveConfig(filePath)
-		pcall(function()
-			local config = { Flags = {}, Binds = {}, Sliders = {}, Pickers = {} }
-	
-			for _, tab in next, Window.Tabs do
-				for flag, value in next, tab.Flags do
-					config.Flags[flag] = value
-				end
-		
-				for _, section in next, tab.Sections do
-					for _, item in next, section.List do
-						local flag = item.Flag or item.Name
-		
-						if item.Type == "Bind" then
-							config.Binds[flag] = item.Bind.Name
-		
-						elseif item.Type == "Slider" then
-							config.Sliders[flag] = item.Value
-		
-						elseif item.Type == "Picker" then
-							config.Pickers[flag] = { Color = item.Color, Rainbow = item.Rainbow }
-		
-						elseif item.Type == "SubSection" then
-							for _, item2 in next, item.List do
-								local flag2 = item2.Flag or item2.Name
-		
-								if item2.Type == "Bind" then
-									config.Binds[flag2] = item2.Bind.Name
-		
-								elseif item2.Type == "Slider" then
-									config.Sliders[flag2] = item2.Value
-		
-								elseif item2.Type == "Picker" then
-									config.Pickers[flag2] = { Color = item2.Color, Rainbow = item2.Rainbow }
-								end
-							end
-						end
-					end
-				end
-			end
-		
-			writefile(filePath, HS:JSONEncode(config))
-		end)
-	end
-	
+local function saveConfig(filePath)
+    local config = { Flags = {}, Binds = {}, Sliders = {}, Pickers = {} }
+
+    for _, tab in next, Window.Tabs do
+        for flag, value in next, tab.Flags do
+            config.Flags[flag] = value
+        end
+
+        for _, section in next, section.List do
+            for _, item in next, section.List do
+                local flag = item.Flag or item.Name
+
+                if item.Type == "Bind" then
+                    config.Binds[flag] = item.Bind.Name
+
+                elseif item.Type == "Slider" then
+                    config.Sliders[flag] = item.Value
+
+                elseif item.Type == "Picker" then
+                    config.Pickers[flag] = { Color = item.Color, Rainbow = item.Rainbow }
+
+                elseif item.Type == "SubSection" then
+                    for _, item2 in next, item.List do
+                        local flag2 = item2.Flag or item2.Name
+
+                        if item2.Type == "Bind" then
+                            config.Binds[flag2] = item2.Bind.Name
+
+                        elseif item2.Type == "Slider" then
+                            config.Sliders[flag2] = item2.Value
+
+                        elseif item2.Type == "Picker" then
+                            config.Pickers[flag2] = { Color = item2.Color, Rainbow = item2.Rainbow }
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    local jsonConfig, errorMsg = HS:JSONEncode(config)
+    if not jsonConfig then
+        warn("Failed to encode JSON: ".. errorMsg)
+        return
+    end
+
+    local success, writeErrorMsg = writefile(filePath, jsonConfig)
+    if not success then
+        warn("Failed to write file: ".. filePath.. " - ".. writeErrorMsg)
+    end
+end
+
 local function loadConfig(filePath)
     local configContent, errorMsg = readfile(filePath)
     if not configContent then
-        warn("Failed to read file: " .. filePath .. " - " .. errorMsg)
+        warn("Failed to read file: ".. filePath.. " - ".. errorMsg)
         return
     end
 
@@ -510,7 +517,7 @@ local function loadConfig(filePath)
 
     local config, decodeErrorMsg = HS:JSONDecode(configContent)
     if not config then
-        warn("Failed to decode JSON: " .. decodeErrorMsg)
+        warn("Failed to decode JSON: ".. decodeErrorMsg)
         return
     end
 
@@ -519,6 +526,7 @@ local function loadConfig(filePath)
         for _, section in next, tab.Sections do
             for _, item in next, section.List do
                 local flag = item.Flag or item.Name
+
                 if flag and config.Flags and config.Flags[flag] ~= nil then
                     if item.Type == "Toggle" then
                         item:Set(config.Flags[flag])
@@ -540,6 +548,7 @@ local function loadConfig(filePath)
                 elseif item.Type == "SubSection" and item.List then
                     for _, item2 in next, item.List do
                         local flag2 = item2.Flag or item2.Name
+
                         if flag2 and config.Flags and config.Flags[flag2] ~= nil then
                             if item2.Type == "Toggle" then
                                 item2:Set(config.Flags[flag2])
