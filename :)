@@ -464,7 +464,7 @@ local function saveConfig(filePath)
                 if item.Type == "Toggle" then
                     config[#config + 1] = string.format("Toggle:%s:%s", flag, tostring(item.Value))
                 elseif item.Type == "Bind" then
-                    config[#config + 1] = string.format("Bind:%s:%s", flag, item.Bind.Name)
+                    config[#config + 1] = string.format("Bind:%s:%s", flag, item.Bind and item.Bind.Name or "nil")
                 elseif item.Type == "Slider" then
                     config[#config + 1] = string.format("Slider:%s:%s", flag, tostring(item.Value))
                 elseif item.Type == "Picker" then
@@ -475,7 +475,7 @@ local function saveConfig(filePath)
                         if item2.Type == "Toggle" then
                             config[#config + 1] = string.format("SubSectionToggle:%s:%s", flag2, tostring(item2.Value))
                         elseif item2.Type == "Bind" then
-                            config[#config + 1] = string.format("SubSectionBind:%s:%s", flag2, item2.Bind.Name)
+                            config[#config + 1] = string.format("SubSectionBind:%s:%s", flag2, item2.Bind and item2.Bind.Name or "nil")
                         elseif item2.Type == "Slider" then
                             config[#config + 1] = string.format("SubSectionSlider:%s:%s", flag2, tostring(item2.Value))
                         elseif item2.Type == "Picker" then
@@ -525,7 +525,11 @@ local function loadConfig(filePath)
                         for _, section in next, tab.Sections do
                             for _, item in next, section.List do
                                 if (item.Flag or item.Name) == flag and item.Type == "Bind" then
-                                    item:Set(Enum.KeyCode[value])
+                                    if value == "nil" then
+                                        item:Set(nil)
+                                    else
+                                        item:Set(Enum.KeyCode[value])
+                                    end
                                 end
                             end
                         end
@@ -576,7 +580,11 @@ local function loadConfig(filePath)
                                     if item.Type == "SubSection" then
                                         for _, item2 in next, item.List do
                                             if (item2.Flag or item2.Name) == flag and item2.Type == "Bind" then
-                                                item2:Set(Enum.KeyCode[value])
+                                                if value == "nil" then
+                                                    item2:Set(nil)
+                                                else
+                                                    item2:Set(Enum.KeyCode[value])
+                                                end
                                             end
                                         end
                                     end
