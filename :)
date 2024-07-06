@@ -499,60 +499,73 @@ function Library:AddWindow(options)
 		end)
 	end
 	
-	local function loadConfig(filePath)
-		pcall(function()
-			local config = HS:JSONDecode(readfile(filePath))
-		
-			if config then
-				for _, tab in next, Window.Tabs do
-					for _, section in next, tab.Sections do
-						for _, item in next, section.List do
-							local flag = item.Flag or item.Name
-		
-							if config.Flags[flag] ~= nil then
-								item[item.Type == "Toggle" and "Set" or "Toggle"](item, config.Flags[flag])
-							end
-		
-							if item.Type == "Bind" then
-								item:Set(Enum.KeyCode[config.Binds[flag]])
-		
-							elseif item.Type == "Slider" then
-								item:Set(config.Sliders[flag])
-		
-							elseif item.Type == "Picker" then
-								local picker = config.Pickers[flag]
-		
-								item:Set(picker.Color.R, picker.Color.G, picker.Color.B)
-								item:ToggleRainbow(picker.Rainbow)
-		
-							elseif item.Type == "SubSection" then
-								for _, item2 in next, item.List do
-									local flag2 = item2.Flag or item2.Name
-		
-									if config.Flags[flag2] ~= nil then
-										item2[item2.Type == "Toggle" and "Set" or "Toggle"](item2, config.Flags[flag2])
-									end
-		
-									if item2.Type == "Bind" then
-										item2:Set(Enum.KeyCode[config.Binds[flag2]])
-		
-									elseif item2.Type == "Slider" then
-										item2:Set(config.Sliders[flag2])
-		
-									elseif item2.Type == "Picker" then
-										local picker = config.Pickers[flag2]
-		
-										item2:Set(picker.Color.R, picker.Color.G, picker.Color.B)
-										item2:ToggleRainbow(picker.Rainbow)
-									end
-								end
-							end
-						end
-					end
-				end
-			end
-		end)
-	end
+local function loadConfig(filePath)
+    local success, errorMsg = pcall(function()
+        local configContent = readfile(filePath)
+        if not configContent then
+            error("Failed to read file: " .. filePath)
+        end
+
+        local config = HS:JSONDecode(configContent)
+        if not config then
+            error("Failed to decode JSON from file: " .. filePath)
+        end
+
+        for _, tab in next, Window.Tabs do
+            for _, section in next, tab.Sections do
+                for _, item in next, section.List do
+                    local flag = item.Flag or item.Name
+                    if flag and config.Flags and config.Flags[flag] ~= nil then
+                        if item.Type == "Toggle" then
+                            item:Set(config.Flags[flag])
+                        else
+                            item:Toggle(config.Flags[flag])
+                        end
+                    end
+
+                    if item.Type == "Bind" and config.Binds then
+                        item:Set(Enum.KeyCode[config.Binds[flag]])
+                    elseif item.Type == "Slider" and config.Sliders then
+                        item:Set(config.Sliders[flag])
+                    elseif item.Type == "Picker" and config.Pickers then
+                        local picker = config.Pickers[flag]
+                        if picker then
+                            item:Set(picker.Color.R, picker.Color.G, picker.Color.B)
+                            item:ToggleRainbow(picker.Rainbow)
+                        end
+                    elseif item.Type == "SubSection" and item.List then
+                        for _, item2 in next, item.List do
+                            local flag2 = item2.Flag or item2.Name
+                            if flag2 and config.Flags and config.Flags[flag2] ~= nil then
+                                if item2.Type == "Toggle" then
+                                    item2:Set(config.Flags[flag2])
+                                else
+                                    item2:Toggle(config.Flags[flag2])
+                                end
+                            end
+
+                            if item2.Type == "Bind" and config.Binds then
+                                item2:Set(Enum.KeyCode[config.Binds[flag2]])
+                            elseif item2.Type == "Slider" and config.Sliders then
+                                item2:Set(config.Sliders[flag2])
+                            elseif item2.Type == "Picker" and config.Pickers then
+                                local picker2 = config.Pickers[flag2]
+                                if picker2 then
+                                    item2:Set(picker2.Color.R, picker2.Color.G, picker2.Color.B)
+                                    item2:ToggleRainbow(picker2.Rainbow)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+
+    if not success then
+        warn("Error loading config: " .. errorMsg)
+    end
+end
 
 	function Window:Toggle(bool)
 		self.Toggled = bool
