@@ -507,111 +507,117 @@ local function loadConfig(filePath)
     local configLines = string.split(configContent, "\n")
 
     for _, line in ipairs(configLines) do
-        local itemType, flag, value = string.match(line, "([^:]+):([^:]+):(.*)")
-        if itemType == "Toggle" then
-            for _, tab in next, Window.Tabs do
-                for _, section in next, tab.Sections do
-                    for _, item in next, section.List do
-                        if (item.Flag or item.Name) == flag and item.Type == "Toggle" then
-                            item:Set(value == "true")
+        if line and line ~= "" then
+            local itemType, flag, value = string.match(line, "([^:]+):([^:]+):(.*)")
+            if itemType and flag and value then
+                if itemType == "Toggle" then
+                    for _, tab in next, Window.Tabs do
+                        for _, section in next, tab.Sections do
+                            for _, item in next, section.List do
+                                if (item.Flag or item.Name) == flag and item.Type == "Toggle" then
+                                    item:Set(value == "true")
+                                end
+                            end
                         end
                     end
-                end
-            end
-        elseif itemType == "Bind" then
-            for _, tab in next, Window.Tabs do
-                for _, section in next, tab.Sections do
-                    for _, item in next, section.List do
-                        if (item.Flag or item.Name) == flag and item.Type == "Bind" then
-                            item:Set(Enum.KeyCode[value])
+                elseif itemType == "Bind" then
+                    for _, tab in next, Window.Tabs do
+                        for _, section in next, tab.Sections do
+                            for _, item in next, section.List do
+                                if (item.Flag or item.Name) == flag and item.Type == "Bind" then
+                                    item:Set(Enum.KeyCode[value])
+                                end
+                            end
                         end
                     end
-                end
-            end
-        elseif itemType == "Slider" then
-            for _, tab in next, Window.Tabs do
-                for _, section in next, tab.Sections do
-                    for _, item in next, section.List do
-                        if (item.Flag or item.Name) == flag and item.Type == "Slider" then
-                            item:Set(tonumber(value))
+                elseif itemType == "Slider" then
+                    for _, tab in next, Window.Tabs do
+                        for _, section in next, tab.Sections do
+                            for _, item in next, section.List do
+                                if (item.Flag or item.Name) == flag and item.Type == "Slider" then
+                                    item:Set(tonumber(value))
+                                end
+                            end
                         end
                     end
-                end
-            end
-        elseif itemType == "Picker" then
-            local colorValues, rainbow = string.match(value, "([^:]+):([^:]+)")
-            local r, g, b = string.match(colorValues, "([^,]+),([^,]+),([^,]+)")
-            for _, tab in next, Window.Tabs do
-                for _, section in next, tab.Sections do
-                    for _, item in next, section.List do
-                        if (item.Flag or item.Name) == flag and item.Type == "Picker" then
-                            item:Set(tonumber(r), tonumber(g), tonumber(b))
-                            item:ToggleRainbow(rainbow == "true")
+                elseif itemType == "Picker" then
+                    local colorValues, rainbow = string.match(value, "([^:]+):([^:]+)")
+                    local r, g, b = string.match(colorValues, "([^,]+),([^,]+),([^,]+)")
+                    for _, tab in next, Window.Tabs do
+                        for _, section in next, tab.Sections do
+                            for _, item in next, section.List do
+                                if (item.Flag or item.Name) == flag and item.Type == "Picker" then
+                                    item:Set(tonumber(r), tonumber(g), tonumber(b))
+                                    item:ToggleRainbow(rainbow == "true")
+                                end
+                            end
                         end
                     end
-                end
-            end
-        elseif string.match(itemType, "SubSection") then
-            local subItemType = string.match(itemType, "SubSection([^:]+)")
-            if subItemType == "Toggle" then
-                for _, tab in next, Window.Tabs do
-                    for _, section in next, tab.Sections do
-                        for _, item in next, section.List do
-                            if item.Type == "SubSection" then
-                                for _, item2 in next, item.List do
-                                    if (item2.Flag or item2.Name) == flag and item2.Type == "Toggle" then
-                                        item2:Set(value == "true")
+                elseif string.match(itemType, "SubSection") then
+                    local subItemType = string.match(itemType, "SubSection([^:]+)")
+                    if subItemType == "Toggle" then
+                        for _, tab in next, Window.Tabs do
+                            for _, section in next, tab.Sections do
+                                for _, item in next, section.List do
+                                    if item.Type == "SubSection" then
+                                        for _, item2 in next, item.List do
+                                            if (item2.Flag or item2.Name) == flag and item2.Type == "Toggle" then
+                                                item2:Set(value == "true")
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    elseif subItemType == "Bind" then
+                        for _, tab in next, Window.Tabs do
+                            for _, section in next, tab.Sections do
+                                for _, item in next, section.List do
+                                    if item.Type == "SubSection" then
+                                        for _, item2 in next, item.List do
+                                            if (item2.Flag or item2.Name) == flag and item2.Type == "Bind" then
+                                                item2:Set(Enum.KeyCode[value])
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    elseif subItemType == "Slider" then
+                        for _, tab in next, Window.Tabs do
+                            for _, section in next, tab.Sections do
+                                for _, item in next, section.List do
+                                    if item.Type == "SubSection" then
+                                        for _, item2 in next, item.List do
+                                            if (item2.Flag or item2.Name) == flag and item2.Type == "Slider" then
+                                                item2:Set(tonumber(value))
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    elseif subItemType == "Picker" then
+                        local colorValues, rainbow = string.match(value, "([^:]+):([^:]+)")
+                        local r, g, b = string.match(colorValues, "([^,]+),([^,]+),([^,]+)")
+                        for _, tab in next, Window.Tabs do
+                            for _, section in next, tab.Sections do
+                                for _, item in next, section.List do
+                                    if item.Type == "SubSection" then
+                                        for _, item2 in next, item.List do
+                                            if (item2.Flag or item2.Name) == flag and item2.Type == "Picker" then
+                                                item2:Set(tonumber(r), tonumber(g), tonumber(b))
+                                                item2:ToggleRainbow(rainbow == "true")
+                                            end
+                                        end
                                     end
                                 end
                             end
                         end
                     end
                 end
-            elseif subItemType == "Bind" then
-                for _, tab in next, Window.Tabs do
-                    for _, section in next, tab.Sections do
-                        for _, item in next, section.List do
-                            if item.Type == "SubSection" then
-                                for _, item2 in next, item.List do
-                                    if (item2.Flag or item2.Name) == flag and item2.Type == "Bind" then
-                                        item2:Set(Enum.KeyCode[value])
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-            elseif subItemType == "Slider" then
-                for _, tab in next, Window.Tabs do
-                    for _, section in next, tab.Sections do
-                        for _, item in next, section.List do
-                            if item.Type == "SubSection" then
-                                for _, item2 in next, item.List do
-                                    if (item2.Flag or item2.Name) == flag and item2.Type == "Slider" then
-                                        item2:Set(tonumber(value))
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-            elseif subItemType == "Picker" then
-                local colorValues, rainbow = string.match(value, "([^:]+):([^:]+)")
-                local r, g, b = string.match(colorValues, "([^,]+),([^,]+),([^,]+)")
-                for _, tab in next, Window.Tabs do
-                    for _, section in next, tab.Sections do
-                        for _, item in next, section.List do
-                            if item.Type == "SubSection" then
-                                for _, item2 in next, item.List do
-                                    if (item2.Flag or item2.Name) == flag and item2.Type == "Picker" then
-                                        item2:Set(tonumber(r), tonumber(g), tonumber(b))
-                                        item2:ToggleRainbow(rainbow == "true")
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
+            else
+                warn("Invalid line format: " .. tostring(line))
             end
         end
     end
