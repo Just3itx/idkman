@@ -506,9 +506,13 @@ local function loadConfig(filePath)
             error("Failed to read file: " .. filePath)
         end
 
-        local config = HS:JSONDecode(configContent)
-        if not config then
-            error("Failed to decode JSON from file: " .. filePath)
+        local config
+        local decodeSuccess, decodeError = pcall(function()
+            config = HS:JSONDecode(configContent)
+        end)
+        
+        if not decodeSuccess or not config then
+            error("Failed to decode JSON from file: " .. filePath .. " with error: " .. decodeError)
         end
 
         for _, tab in next, Window.Tabs do
