@@ -15,7 +15,7 @@ local Library = {
 		IsBusy = false,
 	},
 	Settings = {
-		ConfigPath = "3itx Script",
+		ConfigPath = nil,
 		MaxNotifLines = 5,
 		MaxNotifStacking = 5,
 	},
@@ -47,8 +47,8 @@ local ListenForInput = false
 -- Directory
 
 local Directory = SelfModules.Directory.Create({
-	["3ITX Script"] = {
-		"Config",
+	["Vynixius UI Library"] = {
+		"Configs",
 	},
 })
 
