@@ -47,7 +47,7 @@ local ListenForInput = false
 -- Directory
 
 local Directory = SelfModules.Directory.Create({
-	["3itxScript"] = {
+	["3ITX Script"] = {
 		"Config",
 	},
 })
