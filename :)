@@ -489,13 +489,13 @@ local function saveConfig(filePath)
         end
     end
 
-    local jsonConfig, errorMsg = pcall(function() return HS:JSONEncode(config) end)
-    if not jsonConfig then
-        warn("Failed to encode JSON: " .. errorMsg)
+    local success, jsonConfig = pcall(function() return HS:JSONEncode(config) end)
+    if not success or not jsonConfig then
+        warn("Failed to encode JSON: " .. (jsonConfig or "Unknown error"))
         return
     end
 
-    local success, writeErrorMsg = pcall(function() return writefile(filePath, jsonConfig) end)
+    local success, writeErrorMsg = pcall(function() writefile(filePath, jsonConfig) end)
     if not success then
         warn("Failed to write file: " .. filePath .. " - " .. writeErrorMsg)
     end
@@ -503,17 +503,17 @@ end
 
 
 local function loadConfig(filePath)
-    local configContent, errorMsg = pcall(function() return readfile(filePath) end)
-    if not configContent then
-        warn("Failed to read file: " .. filePath .. " - " .. errorMsg)
+    local success, configContent = pcall(function() return readfile(filePath) end)
+    if not success or not configContent then
+        warn("Failed to read file: " .. filePath .. " - " .. (configContent or "Unknown error"))
         return
     end
 
     print("Config Content: ", configContent)
 
-    local config, decodeErrorMsg = pcall(function() return HS:JSONDecode(configContent) end)
-    if not config then
-        warn("Failed to decode JSON: " .. decodeErrorMsg)
+    local success, config = pcall(function() return HS:JSONDecode(configContent) end)
+    if not success or not config then
+        warn("Failed to decode JSON: " .. (config or "Unknown error"))
         return
     end
 
