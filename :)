@@ -709,6 +709,7 @@ function Library:AddWindow(options)
 			ScrollBarImageColor3 = SelfModules.UI.Color.Add(Library.Theme.BackgroundColor, Color3.fromRGB(15, 15, 15)),
 			ScrollBarThickness = 5,
 			Visible = false,
+			RichText = true,
 
 			SelfModules.UI.Create("UIListLayout", {
 				SortOrder = Enum.SortOrder.LayoutOrder,
