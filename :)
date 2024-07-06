@@ -455,33 +455,31 @@ function Library:AddWindow(options)
 	-- Functions
 
 local function saveConfig(filePath)
-    local config = { Flags = {}, Binds = {}, Sliders = {}, Pickers = {} }
+    local config = {}
 
     for _, tab in next, Window.Tabs do
         for _, section in next, tab.Sections do
             for _, item in next, section.List do
                 local flag = item.Flag or item.Name
-
                 if item.Type == "Toggle" then
-                    config.Flags[flag] = item.Value
+                    config[#config + 1] = string.format("Toggle:%s:%s", flag, tostring(item.Value))
                 elseif item.Type == "Bind" then
-                    config.Binds[flag] = item.Bind.Name
+                    config[#config + 1] = string.format("Bind:%s:%s", flag, item.Bind.Name)
                 elseif item.Type == "Slider" then
-                    config.Sliders[flag] = item.Value
+                    config[#config + 1] = string.format("Slider:%s:%s", flag, tostring(item.Value))
                 elseif item.Type == "Picker" then
-                    config.Pickers[flag] = { Color = item.Color, Rainbow = item.Rainbow }
+                    config[#config + 1] = string.format("Picker:%s:%s,%s,%s:%s", flag, tostring(item.Color.R), tostring(item.Color.G), tostring(item.Color.B), tostring(item.Rainbow))
                 elseif item.Type == "SubSection" then
                     for _, item2 in next, item.List do
                         local flag2 = item2.Flag or item2.Name
-
                         if item2.Type == "Toggle" then
-                            config.Flags[flag2] = item2.Value
+                            config[#config + 1] = string.format("SubSectionToggle:%s:%s", flag2, tostring(item2.Value))
                         elseif item2.Type == "Bind" then
-                            config.Binds[flag2] = item2.Bind.Name
+                            config[#config + 1] = string.format("SubSectionBind:%s:%s", flag2, item2.Bind.Name)
                         elseif item2.Type == "Slider" then
-                            config.Sliders[flag2] = item2.Value
+                            config[#config + 1] = string.format("SubSectionSlider:%s:%s", flag2, tostring(item2.Value))
                         elseif item2.Type == "Picker" then
-                            config.Pickers[flag2] = { Color = item2.Color, Rainbow = item2.Rainbow }
+                            config[#config + 1] = string.format("SubSectionPicker:%s:%s,%s,%s:%s", flag2, tostring(item2.Color.R), tostring(item2.Color.G), tostring(item2.Color.B), tostring(item2.Rainbow))
                         end
                     end
                 end
@@ -489,18 +487,14 @@ local function saveConfig(filePath)
         end
     end
 
-    local success, jsonConfig = pcall(function() return HS:JSONEncode(config) end)
-    if not success or not jsonConfig then
-        warn("Failed to encode JSON: " .. (jsonConfig or "Unknown error"))
-        return
-    end
-
-    local success, writeErrorMsg = pcall(function() writefile(filePath, jsonConfig) end)
+    local configString = table.concat(config, "\n")
+    local success, writeErrorMsg = pcall(function() writefile(filePath, configString) end)
     if not success then
         warn("Failed to write file: " .. filePath .. " - " .. writeErrorMsg)
+    else
+        print("Successfully saved config to file: " .. filePath)
     end
 end
-
 
 local function loadConfig(filePath)
     local success, configContent = pcall(function() return readfile(filePath) end)
@@ -510,58 +504,110 @@ local function loadConfig(filePath)
     end
 
     print("Config Content: ", configContent)
+    local configLines = string.split(configContent, "\n")
 
-    local success, config = pcall(function() return HS:JSONDecode(configContent) end)
-    if not success or not config then
-        warn("Failed to decode JSON: " .. (config or "Unknown error"))
-        return
-    end
-
-    -- Process the config
-    for _, tab in next, Window.Tabs do
-        for _, section in next, tab.Sections do
-            for _, item in next, section.List do
-                local flag = item.Flag or item.Name
-
-                if flag and config.Flags and config.Flags[flag] ~= nil then
-                    if item.Type == "Toggle" then
-                        item:Set(config.Flags[flag])
-                    else
-                        item:Toggle(config.Flags[flag])
+    for _, line in ipairs(configLines) do
+        local itemType, flag, value = string.match(line, "([^:]+):([^:]+):(.*)")
+        if itemType == "Toggle" then
+            for _, tab in next, Window.Tabs do
+                for _, section in next, tab.Sections do
+                    for _, item in next, section.List do
+                        if (item.Flag or item.Name) == flag and item.Type == "Toggle" then
+                            item:Set(value == "true")
+                        end
                     end
                 end
-
-                if item.Type == "Bind" and config.Binds then
-                    item:Set(Enum.KeyCode[config.Binds[flag]])
-                elseif item.Type == "Slider" and config.Sliders then
-                    item:Set(config.Sliders[flag])
-                elseif item.Type == "Picker" and config.Pickers then
-                    local picker = config.Pickers[flag]
-                    if picker then
-                        item:Set(picker.Color.R, picker.Color.G, picker.Color.B)
-                        item:ToggleRainbow(picker.Rainbow)
+            end
+        elseif itemType == "Bind" then
+            for _, tab in next, Window.Tabs do
+                for _, section in next, tab.Sections do
+                    for _, item in next, section.List do
+                        if (item.Flag or item.Name) == flag and item.Type == "Bind" then
+                            item:Set(Enum.KeyCode[value])
+                        end
                     end
-                elseif item.Type == "SubSection" and item.List then
-                    for _, item2 in next, item.List do
-                        local flag2 = item2.Flag or item2.Name
-
-                        if flag2 and config.Flags and config.Flags[flag2] ~= nil then
-                            if item2.Type == "Toggle" then
-                                item2:Set(config.Flags[flag2])
-                            else
-                                item2:Toggle(config.Flags[flag2])
+                end
+            end
+        elseif itemType == "Slider" then
+            for _, tab in next, Window.Tabs do
+                for _, section in next, tab.Sections do
+                    for _, item in next, section.List do
+                        if (item.Flag or item.Name) == flag and item.Type == "Slider" then
+                            item:Set(tonumber(value))
+                        end
+                    end
+                end
+            end
+        elseif itemType == "Picker" then
+            local colorValues, rainbow = string.match(value, "([^:]+):([^:]+)")
+            local r, g, b = string.match(colorValues, "([^,]+),([^,]+),([^,]+)")
+            for _, tab in next, Window.Tabs do
+                for _, section in next, tab.Sections do
+                    for _, item in next, section.List do
+                        if (item.Flag or item.Name) == flag and item.Type == "Picker" then
+                            item:Set(tonumber(r), tonumber(g), tonumber(b))
+                            item:ToggleRainbow(rainbow == "true")
+                        end
+                    end
+                end
+            end
+        elseif string.match(itemType, "SubSection") then
+            local subItemType = string.match(itemType, "SubSection([^:]+)")
+            if subItemType == "Toggle" then
+                for _, tab in next, Window.Tabs do
+                    for _, section in next, tab.Sections do
+                        for _, item in next, section.List do
+                            if item.Type == "SubSection" then
+                                for _, item2 in next, item.List do
+                                    if (item2.Flag or item2.Name) == flag and item2.Type == "Toggle" then
+                                        item2:Set(value == "true")
+                                    end
+                                end
                             end
                         end
-
-                        if item2.Type == "Bind" and config.Binds then
-                            item2:Set(Enum.KeyCode[config.Binds[flag2]])
-                        elseif item2.Type == "Slider" and config.Sliders then
-                            item2:Set(config.Sliders[flag2])
-                        elseif item2.Type == "Picker" and config.Pickers then
-                            local picker2 = config.Pickers[flag2]
-                            if picker2 then
-                                item2:Set(picker2.Color.R, picker2.Color.G, picker2.Color.B)
-                                item2:ToggleRainbow(picker2.Rainbow)
+                    end
+                end
+            elseif subItemType == "Bind" then
+                for _, tab in next, Window.Tabs do
+                    for _, section in next, tab.Sections do
+                        for _, item in next, section.List do
+                            if item.Type == "SubSection" then
+                                for _, item2 in next, item.List do
+                                    if (item2.Flag or item2.Name) == flag and item2.Type == "Bind" then
+                                        item2:Set(Enum.KeyCode[value])
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            elseif subItemType == "Slider" then
+                for _, tab in next, Window.Tabs do
+                    for _, section in next, tab.Sections do
+                        for _, item in next, section.List do
+                            if item.Type == "SubSection" then
+                                for _, item2 in next, item.List do
+                                    if (item2.Flag or item2.Name) == flag and item2.Type == "Slider" then
+                                        item2:Set(tonumber(value))
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            elseif subItemType == "Picker" then
+                local colorValues, rainbow = string.match(value, "([^:]+):([^:]+)")
+                local r, g, b = string.match(colorValues, "([^,]+),([^,]+),([^,]+)")
+                for _, tab in next, Window.Tabs do
+                    for _, section in next, tab.Sections do
+                        for _, item in next, section.List do
+                            if item.Type == "SubSection" then
+                                for _, item2 in next, item.List do
+                                    if (item2.Flag or item2.Name) == flag and item2.Type == "Picker" then
+                                        item2:Set(tonumber(r), tonumber(g), tonumber(b))
+                                        item2:ToggleRainbow(rainbow == "true")
+                                    end
+                                end
                             end
                         end
                     end
